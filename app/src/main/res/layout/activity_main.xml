@@ -1,0 +1,162 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_height="match_parent"
+    android:layout_width="match_parent"
+    android:orientation="vertical">
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        app:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+        android:background="?attr/colorPrimary" />
+
+    <android.support.v4.widget.DrawerLayout
+        android:id="@+id/drawer_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+        <RelativeLayout
+            android:id="@+id/demo_parent"
+            android:layout_height="match_parent"
+            android:layout_width="match_parent"
+            android:padding="15dp"
+            android:background="#99bbff">
+            <ImageView
+                android:id="@+id/demo_image"
+                android:layout_alignParentLeft="true"
+                android:layout_width="match_parent"
+                android:layout_height="170dp"
+                android:background="@android:color/transparent"
+                android:scaleType="fitXY" />
+            <ListView
+                android:id="@+id/demo_list"
+                android:layout_width="160dp"
+                android:layout_height="300dp"
+                android:layout_below="@id/demo_image"
+                android:layout_marginTop="30dp"
+                android:divider="@null"
+                android:dividerHeight="0dp">
+            </ListView>
+            <com.zys.demo.MyView
+                android:id="@+id/demo_myview"
+                android:layout_width="150dp"
+                android:layout_height="160dp"
+                android:layout_alignTop="@id/demo_list"
+                android:layout_alignParentRight="true"
+                android:background="@color/colorPrimaryDark"/>
+            <Button
+                android:id="@+id/demo_button"
+                android:layout_width="150dp"
+                android:layout_height="100dp"
+                android:layout_alignBottom="@id/demo_list"
+                android:layout_alignParentRight="true"
+                android:textSize="20sp"
+                android:textColor="#ffffff"
+                android:text="Button"
+                android:textAllCaps="false"
+                android:background="@drawable/demo_button"/>
+        </RelativeLayout>
+
+        <LinearLayout
+            android:layout_height="match_parent"
+            android:layout_width="240dp"
+            android:layout_gravity="start"
+            android:orientation="vertical"
+            android:background="#ffffff">
+
+            <RelativeLayout
+                android:layout_height="wrap_content"
+                android:layout_width="match_parent"
+                android:layout_marginTop="50dp"
+                android:gravity="center_vertical">
+                <TextView
+                    style="@style/ToggleText"
+                    android:text="Effect" />
+                <ToggleButton
+                    style="@style/ToggleButton"
+                    android:id="@+id/toggle_effect"
+                    android:checked="true"/>
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:layout_height="wrap_content"
+                android:layout_width="match_parent"
+                android:layout_marginTop="20dp"
+                android:gravity="center_vertical">
+                <TextView
+                    style="@style/ToggleText"
+                    android:text="Callback" />
+                <ToggleButton
+                    style="@style/ToggleButton"
+                    android:id="@+id/toggle_callback"
+                    android:checked="false"/>
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:layout_height="wrap_content"
+                android:layout_width="match_parent"
+                android:layout_marginTop="50dp"
+                android:gravity="center_vertical">
+                <TextView
+                    style="@style/SeekBarTextLeft"
+                    android:id="@+id/complexity_text"
+                    android:text="Complexity" />
+                <TextView
+                    style="@style/SeekBarTextRight"
+                    android:id="@+id/complexity_value"
+                    android:text="12" />
+                <SeekBar
+                    android:id="@+id/seekbar_complexity"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/complexity_text"
+                    android:max="8"
+                    android:progress="4" />
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:layout_height="wrap_content"
+                android:layout_width="match_parent"
+                android:layout_marginTop="20dp"
+                android:gravity="center_vertical">
+                <TextView
+                    style="@style/SeekBarTextLeft"
+                    android:id="@+id/break_text"
+                    android:text="Break-Duration" />
+                <TextView
+                    style="@style/SeekBarTextRight"
+                    android:id="@+id/break_value"
+                    android:text="700ms" />
+                <SeekBar
+                    android:id="@+id/seekbar_break"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/break_text"
+                    android:max="4500"
+                    android:progress="200" />
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:layout_height="wrap_content"
+                android:layout_width="match_parent"
+                android:layout_marginTop="20dp"
+                android:gravity="center_vertical">
+                <TextView
+                    style="@style/SeekBarTextLeft"
+                    android:id="@+id/fall_text"
+                    android:text="Fall-Duration" />
+                <TextView
+                    style="@style/SeekBarTextRight"
+                    android:id="@+id/fall_value"
+                    android:text="2000ms" />
+                <SeekBar
+                    android:id="@+id/seekbar_fall"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/fall_text"
+                    android:max="9000"
+                    android:progress="1000"/>
+            </RelativeLayout>
+        </LinearLayout>
+    </android.support.v4.widget.DrawerLayout>
+</LinearLayout>
