@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 class BrokenAnimator extends ValueAnimator{
-
+    final int SEGMENT = 66;
     static final int STAGE_BREAKING = 1;
     static final int STAGE_FALLING = 2;
     static final int STAGE_EARLYEND = 3;
@@ -69,10 +69,10 @@ class BrokenAnimator extends ValueAnimator{
         offsetY = mTouchPoint.y - r.top;
         r.offset(-mTouchPoint.x,-mTouchPoint.y);
 
-        Rect bvr = new Rect();
-        mBrokenView.getGlobalVisibleRect(bvr);
-        mTouchPoint.x -= bvr.left;
-        mTouchPoint.y -= bvr.top;
+        Rect bvR = new Rect();
+        mBrokenView.getGlobalVisibleRect(bvR);
+        mTouchPoint.x -= bvR.left;
+        mTouchPoint.y -= bvR.top;
 
         buildBrokenLines(r);
         buildBrokenAreas(r);
@@ -83,30 +83,6 @@ class BrokenAnimator extends ValueAnimator{
         setFloatValues(0f,1f);
         setInterpolator(new AccelerateInterpolator(2.0f));
         setDuration(mConfig.breakDuration);
-    }
-    public void setFallingDuration(){
-        setDuration(mConfig.fallDuration);
-    }
-
-    private void buildPaintShader(){
-        if(mConfig.paint == null) {
-            onDrawPaint = new Paint();
-            BitmapShader shader = new BitmapShader(mBitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
-            Matrix matrix = new Matrix();
-            matrix.setTranslate(-offsetX - 10, -offsetY - 7);
-            shader.setLocalMatrix(matrix);
-            ColorMatrix cMatrix = new ColorMatrix();
-            cMatrix.set(new float[]{
-                    2f, 0, 0, 0, 120,
-                    0, 2f, 0, 0, 120,
-                    0, 0, 2f, 0, 120,
-                    0, 0, 0, 1, 0});
-            onDrawPaint.setColorFilter(new ColorMatrixColorFilter(cMatrix));
-            onDrawPaint.setShader(shader);
-            onDrawPaint.setStyle(Paint.Style.FILL);
-        }
-        else
-            onDrawPaint = mConfig.paint;
     }
 
     private void buildBrokenLines(Rect r) {
@@ -119,18 +95,21 @@ class BrokenAnimator extends ValueAnimator{
             lineRifts[i].setEndPoint(baseLines[i].getEndPoint());
             pmTemp.setPath(baseLines[i], false);
             float length = pmTemp.getLength();
-            if (length > Utils.dp2px(66)) {
+            if (length > Utils.dp2px(SEGMENT)) {
                 lineRifts[i].setStraight(false);
                 float[] pos = new float[2];
+                pmTemp.getPosTan(Utils.dp2px(SEGMENT), pos, null);
+                lineRifts[i].lineTo(pos[0], pos[1]);
+                lineRifts[i].points.add(new Point((int)pos[0], (int)pos[1]));
                 int xRandom, yRandom;
-                int step = Utils.dp2px(70);
+                int step = Utils.dp2px(SEGMENT + 25);
                 do{
                     pmTemp.getPosTan(step, pos, null);
-                    xRandom = (int) (pos[0] + Utils.nextInt(-Utils.dp2px(2),Utils.dp2px(2)));
-                    yRandom = (int) (pos[1] + Utils.nextInt(-Utils.dp2px(2),Utils.dp2px(2)));
+                    xRandom = (int) (pos[0] + Utils.nextInt(-Utils.dp2px(3),Utils.dp2px(2)));
+                    yRandom = (int) (pos[1] + Utils.nextInt(-Utils.dp2px(2),Utils.dp2px(3)));
                     lineRifts[i].lineTo(xRandom, yRandom);
                     lineRifts[i].points.add(new Point(xRandom, yRandom));
-                    step += Utils.dp2px(70);
+                    step += Utils.dp2px(SEGMENT + 4);
                 } while (step < length);
                 lineRifts[i].lineToEnd();
             } else {
@@ -140,32 +119,7 @@ class BrokenAnimator extends ValueAnimator{
             lineRifts[i].points.add(lineRifts[i].getEndPoint());
         }
     }
-    private void buildFirstLine(LinePath path, Rect r){
-        int[] range=new int[]{-r.left,-r.top,r.right,r.bottom};
-        int max = -1;
-        int maxId = 0;
-        for(int i = 0; i < 4; i++) {
-            if(range[i] > max) {
-                max = range[i];
-                maxId = i;
-            }
-        }
-        switch (maxId){
-            case 0:
-                path.setEndPoint(r.left, Utils.nextInt(r.height()) + r.top);
-                break;
-            case 1:
-                path.setEndPoint(Utils.nextInt(r.width()) + r.left, r.top);
-                break;
-            case 2:
-                path.setEndPoint(r.right, Utils.nextInt(r.height()) + r.top);
-                break;
-            case 3:
-                path.setEndPoint(Utils.nextInt(r.width()) + r.left, r.bottom);
-                break;
-        }
-        path.lineToEnd();
-    }
+
     private void buildBaselines(LinePath[] baseLines,Rect r){
         for(int i = 0; i < mConfig.complexity; i++){
             baseLines[i] = new LinePath();
@@ -200,6 +154,33 @@ class BrokenAnimator extends ValueAnimator{
         }
     }
 
+    private void buildFirstLine(LinePath path, Rect r){
+        int[] range=new int[]{-r.left,-r.top,r.right,r.bottom};
+        int max = -1;
+        int maxId = 0;
+        for(int i = 0; i < 4; i++) {
+            if(range[i] > max) {
+                max = range[i];
+                maxId = i;
+            }
+        }
+        switch (maxId){
+            case 0:
+                path.setEndPoint(r.left, Utils.nextInt(r.height()) + r.top);
+                break;
+            case 1:
+                path.setEndPoint(Utils.nextInt(r.width()) + r.left, r.top);
+                break;
+            case 2:
+                path.setEndPoint(r.right, Utils.nextInt(r.height()) + r.top);
+                break;
+            case 3:
+                path.setEndPoint(Utils.nextInt(r.width()) + r.left, r.bottom);
+                break;
+        }
+        path.lineToEnd();
+    }
+
     private void buildBrokenAreas(Rect r){
         float linkLen = 0;
         int repeat = 0;
@@ -209,7 +190,7 @@ class BrokenAnimator extends ValueAnimator{
             if (repeat > 0) {
                 repeat--;
             } else {
-                linkLen = Utils.nextInt(Utils.dp2px(56),Utils.dp2px(66));
+                linkLen = Utils.nextInt(Utils.dp2px(SEGMENT - 15),Utils.dp2px(SEGMENT));
                 repeat = Utils.nextInt(3);
             }
             int iPre = (i - 1) < 0 ? mConfig.complexity - 1 : i - 1;
@@ -266,6 +247,8 @@ class BrokenAnimator extends ValueAnimator{
 
     private void buildPieces(){
         pieces = new Piece[pathArray.size()];
+        Paint paint = new Paint();
+        Matrix matrix = new Matrix();
         for(int i = 0; i < pieces.length; i++) {
             int shadow = Utils.nextInt(Utils.dp2px(2),Utils.dp2px(9));
             Path path = pathArray.get(i);
@@ -275,18 +258,18 @@ class BrokenAnimator extends ValueAnimator{
             Bitmap pBitmap = Utils.createBitmapSafely((int)r.width() + shadow * 2,
                     (int)r.height() + shadow * 2, Bitmap.Config.ARGB_4444,1);
             if(pBitmap == null){
-                pieces[i]=new Piece(-1, -1, null, shadow);
+                pieces[i] = new Piece(-1, -1, null, shadow);
                 continue;
             }
-            pieces[i]=new Piece((int)r.left + mTouchPoint.x - shadow,
+            pieces[i] = new Piece((int)r.left + mTouchPoint.x - shadow,
                     (int)r.top + mTouchPoint.y - shadow, pBitmap, shadow);
             Canvas canvas = new Canvas(pieces[i].bitmap);
             BitmapShader mBitmapShader = new BitmapShader(mBitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
-            Matrix matrix = new Matrix();
+            matrix.reset();
             matrix.setTranslate(-r.left - offsetX + shadow, -r.top - offsetY + shadow);
             mBitmapShader.setLocalMatrix(matrix);
 
-            Paint paint = new Paint();
+            paint.reset();
             Path offsetPath = new Path();
             offsetPath.addPath(path, -r.left + shadow, -r.top + shadow);
 
@@ -304,6 +287,27 @@ class BrokenAnimator extends ValueAnimator{
             canvas.drawPath(offsetPath, paint);
         }
         Arrays.sort(pieces);
+    }
+
+    private void buildPaintShader(){
+        if(mConfig.paint == null) {
+            onDrawPaint = new Paint();
+            BitmapShader shader = new BitmapShader(mBitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
+            Matrix matrix = new Matrix();
+            matrix.setTranslate(-offsetX - 10, -offsetY - 7);
+            shader.setLocalMatrix(matrix);
+            ColorMatrix cMatrix = new ColorMatrix();
+            cMatrix.set(new float[]{
+                    2.5f, 0, 0, 0, 100,
+                    0, 2.5f, 0, 0, 100,
+                    0, 0, 2.5f, 0, 100,
+                    0, 0, 0, 1, 0});
+            onDrawPaint.setColorFilter(new ColorMatrixColorFilter(cMatrix));
+            onDrawPaint.setShader(shader);
+            onDrawPaint.setStyle(Paint.Style.FILL);
+        }
+        else
+            onDrawPaint = mConfig.paint;
     }
 
     private void warpBrokenLines() {
@@ -405,6 +409,10 @@ class BrokenAnimator extends ValueAnimator{
         return stage;
     }
 
+    public void setFallingDuration(){
+        setDuration(mConfig.fallDuration);
+    }
+
     @Override
     public void start() {
         super.start();
@@ -436,6 +444,8 @@ class BrokenAnimator extends ValueAnimator{
                 onDrawPM.setPath(lineRifts[i], false);
                 float pathLength = onDrawPM.getLength();
                 float startLength = lineRifts[i].getStartLength();
+                if(!lineRifts[i].isStraight())
+                    startLength += Utils.dp2px(7);
                 float drawLength = startLength + fraction * (pathLength - startLength);
                 if (drawLength > pathLength)
                     drawLength = pathLength;

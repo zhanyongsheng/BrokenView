@@ -42,13 +42,6 @@ public class BrokenView extends View {
         animList = new LinkedList<>();
     }
 
-    public boolean isEnable() {
-        return enable;
-    }
-
-    public void setEnable(boolean enable) {
-        this.enable = enable;
-    }
     @Override
     protected void onDraw(Canvas canvas) {
         ListIterator<BrokenAnimator> iterator = animList.listIterator(animList.size());
@@ -64,6 +57,7 @@ public class BrokenView extends View {
         else
             return null;
     }
+
     public BrokenAnimator createAnimator(final View view,Point point,BrokenConfig config){
         Bitmap bitmap = Utils.convertViewToBitmap(view);
         if(bitmap == null)
@@ -104,6 +98,7 @@ public class BrokenView extends View {
 
         return bAnim;
     }
+
     public static BrokenView add2Window(Activity activity) {
         ViewGroup rootView = (ViewGroup) activity.findViewById(Window.ID_ANDROID_CONTENT);
         BrokenView brokenView = new BrokenView(activity);
@@ -115,6 +110,7 @@ public class BrokenView extends View {
         Utils.screenHeight = dm.heightPixels;
         return brokenView;
     }
+
     public void reset(){
         ListIterator<BrokenAnimator> iterator = animList.listIterator();
         while(iterator.hasNext()) {
@@ -126,29 +122,44 @@ public class BrokenView extends View {
         animMap.clear();
         invalidate();
     }
+
+    public boolean isEnable() {
+        return enable;
+    }
+
+    public void setEnable(boolean enable) {
+        this.enable = enable;
+    }
+
     public void setCallback(BrokenCallback c){
         callBack = c;
     }
+
     protected void onBrokenCancel(View v){
         if(callBack != null)
             callBack.onCancel(v);
     }
+
     protected void onBrokenStart(View v){
         if(callBack != null)
             callBack.onStart(v);
     }
+
     protected void onBrokenCancelEnd(View v){
         if(callBack != null)
             callBack.onCancelEnd(v);
     }
+
     protected void onBrokenFallingEnd(View v){
         if(callBack != null)
             callBack.onFallingEnd(v);
     }
+
     protected void onBrokenRestart(View v){
         if(callBack != null)
             callBack.onRestart(v);
     }
+
     protected void onBrokenFalling(View v){
         v.setVisibility(View.INVISIBLE);
         if(callBack != null){
