@@ -25,7 +25,7 @@ BrokenTouchListener listener = new BrokenTouchListener.Builder(brokenView).build
 view.setOnTouchListener(listener);
 ```
 
-Use `BrokenTouchListener.Builder` for more configurations, and set custom attributes as shown below:
+Or you can use `BrokenTouchListener.Builder` for more configurations, and set custom attributes as shown below:
 ```Java
 new BrokenTouchListener.Builder(brokenView).
     setComplexity(...).       // default 12 
@@ -35,7 +35,7 @@ new BrokenTouchListener.Builder(brokenView).
     build();
 ```
 
-You can also set a callback to listen the animation status, like this:
+You can also set a callback to listen to the animations' status, like this:
 ```Java
 brokenView.setCallback.(new BrokenCallback() {
    @Override
