@@ -1,7 +1,11 @@
 # BrokenView
 Glass-break effect for views.<br>
 
-![brokenview](https://github.com/zhanyongsheng/raw/blob/master/BrokenView/image/demo.gif)
+![brokenview](https://raw.githubusercontent.com/zhanyongsheng/raw/master/BrokenView/image/demo.gif)
+
+# Sample APK
+
+[Download](https://raw.githubusercontent.com/zhanyongsheng/raw/master/BrokenView/apk/demo.apk)
 
 # Usage
 
@@ -9,7 +13,7 @@ Add Gradle dependency:
 
 ```gradle
 dependencies {
-   compile 'com.zys:brokenview:1.0.0'
+   compile 'com.zys:brokenview:1.0.1'
 }
 ```
 
@@ -21,7 +25,7 @@ BrokenTouchListener listener = new BrokenTouchListener.Builder(brokenView).build
 view.setOnTouchListener(listener);
 ```
 
-Or you can use `BrokenTouchListener.Builder` for more configurations, and set custom attributes as shown below:
+Use `BrokenTouchListener.Builder` for more configurations, and set custom attributes as shown below:
 ```Java
 new BrokenTouchListener.Builder(brokenView).
     setComplexity(...).       // default 12 
@@ -31,7 +35,7 @@ new BrokenTouchListener.Builder(brokenView).
     build();
 ```
 
-You can also set a callback if you want to do something during the anmiation, like this:
+You can also set a callback to listen the animation status, like this:
 ```Java
 brokenView.setCallback.(new BrokenCallback() {
    @Override
@@ -48,6 +52,9 @@ brokenView.setCallback.(new BrokenCallback() {
    public void onFallingEnd(View v) {...}
 });
 ```
+
+#Compatibility
+Support API LEVEL >= 14
 
 # License
 `BrokenView` is available under the MIT license.
