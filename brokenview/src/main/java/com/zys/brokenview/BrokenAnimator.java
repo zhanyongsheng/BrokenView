@@ -29,7 +29,7 @@ class BrokenAnimator extends ValueAnimator{
      * the step when warp the Beeline-Rifts.
      * Set it to zero to disable the Circle-Rifts effect.
      */
-    private final int SEGMENT;
+    private int SEGMENT;
 
     static final int STAGE_BREAKING = 1;
     static final int STAGE_FALLING = 2;
@@ -50,6 +50,7 @@ class BrokenAnimator extends ValueAnimator{
 
     private boolean canReverse = false;
     private boolean bPressed = true;
+    private boolean hasCircleRifts = true;
 
     private LinePath[] lineRifts;
     private Path[] circleRifts;
@@ -75,6 +76,10 @@ class BrokenAnimator extends ValueAnimator{
         circleRifts = new Path[mConfig.complexity];
         circleWidth = new int[mConfig.complexity];
         SEGMENT = mConfig.circleRiftsRadius;
+        if(SEGMENT == 0) {
+            hasCircleRifts = false;
+            SEGMENT = 66;
+        }
 
         Rect r = new Rect();
         mView.getGlobalVisibleRect(r);
@@ -258,7 +263,7 @@ class BrokenAnimator extends ValueAnimator{
             pmNow.setPath(lineRifts[i],false);
             pmPre.setPath(lineRifts[iPre], false);
 
-            if (SEGMENT != 0 && pmNow.getLength() > linkLen && pmPre.getLength() > linkLen) {
+            if (hasCircleRifts && pmNow.getLength() > linkLen && pmPre.getLength() > linkLen) {
 
                 float[] pointNow = new float[2];
                 float[] pointPre = new float[2];
@@ -521,7 +526,7 @@ class BrokenAnimator extends ValueAnimator{
                 onDrawPath.rLineTo(0, 0); // KITKAT(API 19) and earlier need it
                 canvas.drawPath(onDrawPath, onDrawPaint);
 
-                if(SEGMENT != 0) {
+                if(hasCircleRifts) {
                     if (circleRifts[i] != null && fraction > 0.1) {
                         onDrawPaint.setStyle(Paint.Style.STROKE);
                         float t = (fraction - 0.1f) * 2;

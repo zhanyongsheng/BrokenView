@@ -50,8 +50,12 @@ public class BrokenTouchListener implements View.OnTouchListener  {
             return this;
         }
         /**
-         * Be sure the childView in region don't intercept the touch event,
-         * you can set ontouch-event return false and set clickable to false.
+         * Be sure the childView in region doesn't intercept any touch event,
+         * you can make onTouch-event return false and set clickable to false.
+         *
+         * @param region The region where can enable break-effect.
+         *
+         * @return the BrokenTouchListener Builder.
          */
         public Builder setEnableArea(Region region) {
             config.region = region;
@@ -59,8 +63,12 @@ public class BrokenTouchListener implements View.OnTouchListener  {
             return this;
         }
         /**
-         * Be sure the childView don't intercept the touch event,
-         * you can set ontouch-event return false and set clickable to false.
+         * Be sure the childView doesn't intercept any touch event,
+         * you can make onTouch-event return false and set clickable to false.
+         *
+         * @param childView The view can enable break-effect
+         *
+         * @return the BrokenTouchListener Builder.
          */
         public Builder setEnableArea(View childView) {
             config.childView = childView;
