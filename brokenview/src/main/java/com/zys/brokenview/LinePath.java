@@ -48,13 +48,13 @@ class LinePath extends Path {
     public void setStraight(boolean straight) {
         this.straight = straight;
     }
-
     public float getStartLength() {
         return startLength;
     }
     public void setStartLength(float startLength) {
         this.startLength = startLength;
     }
+
     public void lineToEnd(){
         lineTo(endPoint.x,endPoint.y);
     }

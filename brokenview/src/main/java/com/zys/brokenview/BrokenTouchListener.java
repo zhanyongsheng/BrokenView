@@ -2,13 +2,13 @@ package com.zys.brokenview;
 
 import android.graphics.Paint;
 import android.graphics.Point;
+import android.graphics.Region;
 import android.view.MotionEvent;
 import android.view.View;
 
 public class BrokenTouchListener implements View.OnTouchListener  {
 
     private BrokenAnimator brokenAnim;
-
     private BrokenView brokenView;
     private BrokenConfig config;
     private BrokenTouchListener(Builder builder) {
@@ -21,10 +21,6 @@ public class BrokenTouchListener implements View.OnTouchListener  {
         public Builder(BrokenView brokenView) {
             this.brokenView = brokenView;
             config = new BrokenConfig();
-            config.complexity = 12;
-            config.breakDuration = 700;
-            config.fallDuration = 2000;
-            config.paint = null;
         }
 
         public Builder setComplexity(int complexity) {
@@ -47,6 +43,30 @@ public class BrokenTouchListener implements View.OnTouchListener  {
             config.fallDuration = fallDuration;
             return this;
         }
+        public Builder setCircleRiftsRadius(int radius) {
+            if(radius < 20 && radius != 0)
+                radius = 20;
+            config.circleRiftsRadius = radius;
+            return this;
+        }
+        /**
+         * Be sure the childView in region don't intercept the touch event,
+         * you can set ontouch-event return false and set clickable to false.
+         */
+        public Builder setEnableArea(Region region) {
+            config.region = region;
+            config.childView = null;
+            return this;
+        }
+        /**
+         * Be sure the childView don't intercept the touch event,
+         * you can set ontouch-event return false and set clickable to false.
+         */
+        public Builder setEnableArea(View childView) {
+            config.childView = childView;
+            config.region = null;
+            return this;
+        }
         public Builder setPaint(Paint paint) {
             config.paint = paint;
             return this;
@@ -60,19 +80,29 @@ public class BrokenTouchListener implements View.OnTouchListener  {
         if(brokenView.isEnable()) {
             switch (event.getAction()) {
                 case MotionEvent.ACTION_DOWN:
-                    Point point = new Point((int)event.getRawX(),(int)event.getRawY());
-                    brokenAnim = brokenView.getAnimator(v);
-                    if(brokenAnim == null)
-                        brokenAnim = brokenView.createAnimator(v, point, config);
-                    if(brokenAnim == null)
-                        return true;
-                    if (!brokenAnim.isStarted()) {
-                        brokenAnim.start();
-                        brokenView.onBrokenStart(v);
-                    } else if (brokenAnim.doReverse()) {
-                        brokenView.onBrokenRestart(v);
+                    if(config.childView != null){
+                        config.region = new Region(config.childView.getLeft(),
+                                config.childView.getTop(),
+                                config.childView.getRight(),
+                                config.childView.getBottom());
                     }
-                    v.getParent().requestDisallowInterceptTouchEvent(true);
+                    if(config.region == null || config.region.contains((int)event.getX(),(int)event.getY())) {
+                        Point point = new Point((int) event.getRawX(), (int) event.getRawY());
+                        brokenAnim = brokenView.getAnimator(v);
+                        if (brokenAnim == null)
+                            brokenAnim = brokenView.createAnimator(v, point, config);
+                        if (brokenAnim == null)
+                            return true;
+                        if (!brokenAnim.isStarted()) {
+                            brokenAnim.start();
+                            brokenView.onBrokenStart(v);
+                        } else if (brokenAnim.doReverse()) {
+                            brokenView.onBrokenRestart(v);
+                        }
+                        v.getParent().requestDisallowInterceptTouchEvent(true);
+                    }
+                    else
+                        return false;
                     break;
                 case MotionEvent.ACTION_UP:
                     brokenAnim = brokenView.getAnimator(v);

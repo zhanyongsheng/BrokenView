@@ -36,6 +36,8 @@ public class BrokenView extends View {
 
     public BrokenView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        // KITKAT(API 19) and earlier need to set it when use
+        // PathMeasure.getSegment to display resulting path.
         setLayerType(View.LAYER_TYPE_HARDWARE, null);
         enable = true;
         animMap = new HashMap<>();
@@ -68,6 +70,8 @@ public class BrokenView extends View {
             public void onAnimationRepeat(Animator animation) {
                 super.onAnimationRepeat(animation);
                 BrokenAnimator bAnim = (BrokenAnimator)animation;
+                // We can't set FallingDuration here because it
+                // change the duration of STAGE_BREAKING.
                 bAnim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
                     @Override
                     public void onAnimationUpdate(ValueAnimator animation) {

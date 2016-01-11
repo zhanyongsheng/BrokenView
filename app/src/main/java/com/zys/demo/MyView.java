@@ -18,9 +18,9 @@ public class MyView extends View {
     }
     public MyView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        //if don't close hardware acceleration int Android 4.4,
-        //the ViewGroup will not clip canvas for child when create bitmap from it(R.id.demo_parent)
-        //therefore the canvas has wrong width and height
+        // If don't close hardware acceleration int Android 4.4,
+        // the ViewGroup will not clip canvas for child when create bitmap from it(R.id.demo_parent)
+        // therefore the canvas has wrong width and height.
         setLayerType(View.LAYER_TYPE_HARDWARE, null);
         paint = new Paint();
     }

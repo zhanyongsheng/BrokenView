@@ -157,6 +157,28 @@
                     android:max="9000"
                     android:progress="1000"/>
             </RelativeLayout>
+
+            <RelativeLayout
+                android:layout_height="wrap_content"
+                android:layout_width="match_parent"
+                android:layout_marginTop="20dp"
+                android:gravity="center_vertical">
+                <TextView
+                    style="@style/SeekBarTextLeft"
+                    android:id="@+id/radius_text"
+                    android:text="CircleRifts-Radius" />
+                <TextView
+                    style="@style/SeekBarTextRight"
+                    android:id="@+id/radius_value"
+                    android:text="66dp" />
+                <SeekBar
+                    android:id="@+id/seekbar_radius"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/radius_text"
+                    android:max="130"
+                    android:progress="46"/>
+            </RelativeLayout>
         </LinearLayout>
     </android.support.v4.widget.DrawerLayout>
 </LinearLayout>

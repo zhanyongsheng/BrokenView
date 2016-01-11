@@ -23,7 +23,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 class BrokenAnimator extends ValueAnimator{
-    final int SEGMENT = 66;
+
+    /**
+     * SEGMENT is the base of Circle-Rifts radius,and it's also
+     * the step when warp the Beeline-Rifts.
+     * Set it to zero to disable the Circle-Rifts effect.
+     */
+    private final int SEGMENT;
+
     static final int STAGE_BREAKING = 1;
     static final int STAGE_FALLING = 2;
     static final int STAGE_EARLYEND = 3;
@@ -36,18 +43,23 @@ class BrokenAnimator extends ValueAnimator{
     private Bitmap mBitmap;
     private Point mTouchPoint;
 
+    // Used in onDraw()
     private Paint onDrawPaint;
     private Path onDrawPath;
     private PathMeasure onDrawPM;
+
     private boolean canReverse = false;
-    private boolean bPress = true;
+    private boolean bPressed = true;
+
     private LinePath[] lineRifts;
     private Path[] circleRifts;
     private int[] circleWidth;
+    private ArrayList<Path> pathArray;
     private Piece[] pieces;
+
+    // The touch position relative to mView
     private int offsetX;
     private int offsetY;
-    private ArrayList<Path> pathArray;
 
     public BrokenAnimator(BrokenView brokenView,View view,Bitmap bitmap,Point point,BrokenConfig config){
         mBrokenView = brokenView;
@@ -62,29 +74,37 @@ class BrokenAnimator extends ValueAnimator{
         lineRifts = new LinePath[mConfig.complexity];
         circleRifts = new Path[mConfig.complexity];
         circleWidth = new int[mConfig.complexity];
+        SEGMENT = mConfig.circleRiftsRadius;
 
         Rect r = new Rect();
         mView.getGlobalVisibleRect(r);
         offsetX = mTouchPoint.x - r.left;
         offsetY = mTouchPoint.y - r.top;
-        r.offset(-mTouchPoint.x,-mTouchPoint.y);
+        // Make the touchPoint be the origin of coordinates
+        r.offset(-mTouchPoint.x, -mTouchPoint.y);
 
-        Rect bvR = new Rect();
-        mBrokenView.getGlobalVisibleRect(bvR);
-        mTouchPoint.x -= bvR.left;
-        mTouchPoint.y -= bvR.top;
+        // The touchPoint is original location on the screen,
+        // but the BrokenView canvas may be not full screen (under status bar),
+        // to do this we can translate the canvas correctly.
+        Rect brokenViewR = new Rect();
+        mBrokenView.getGlobalVisibleRect(brokenViewR);
+        mTouchPoint.x -= brokenViewR.left;
+        mTouchPoint.y -= brokenViewR.top;
 
         buildBrokenLines(r);
         buildBrokenAreas(r);
         buildPieces();
         buildPaintShader();
-        warpBrokenLines();
+        warpStraightLines();
 
         setFloatValues(0f,1f);
         setInterpolator(new AccelerateInterpolator(2.0f));
         setDuration(mConfig.breakDuration);
     }
 
+    /**
+     * Build warped-lines according to the baselines, like the DiscretePathEffect.
+     */
     private void buildBrokenLines(Rect r) {
         LinePath[] baseLines = new LinePath[mConfig.complexity];
         buildBaselines(baseLines, r);
@@ -93,26 +113,39 @@ class BrokenAnimator extends ValueAnimator{
             lineRifts[i] = new LinePath();
             lineRifts[i].moveTo(0, 0);
             lineRifts[i].setEndPoint(baseLines[i].getEndPoint());
+
             pmTemp.setPath(baseLines[i], false);
             float length = pmTemp.getLength();
-            if (length > Utils.dp2px(SEGMENT)) {
+            final int THRESHOLD = SEGMENT + SEGMENT / 2;
+
+            if (length > Utils.dp2px(THRESHOLD)) {
                 lineRifts[i].setStraight(false);
+                // First, line to the point at SEGMENT of baseline;
+                // Second, line to the random-point at (SEGMENT+SEGMENT/2) of baseline;
+                // So when we set the start-draw-length to SEGMENT and the paint style is "FILL",
+                // we can make the line become visible faster(exactly, the triangle)
                 float[] pos = new float[2];
                 pmTemp.getPosTan(Utils.dp2px(SEGMENT), pos, null);
                 lineRifts[i].lineTo(pos[0], pos[1]);
+
                 lineRifts[i].points.add(new Point((int)pos[0], (int)pos[1]));
+
                 int xRandom, yRandom;
-                int step = Utils.dp2px(SEGMENT + 25);
+                int step = Utils.dp2px(THRESHOLD);
                 do{
                     pmTemp.getPosTan(step, pos, null);
+                    // !!!
+                    // Here determine the stroke width of lineRifts
                     xRandom = (int) (pos[0] + Utils.nextInt(-Utils.dp2px(3),Utils.dp2px(2)));
                     yRandom = (int) (pos[1] + Utils.nextInt(-Utils.dp2px(2),Utils.dp2px(3)));
                     lineRifts[i].lineTo(xRandom, yRandom);
                     lineRifts[i].points.add(new Point(xRandom, yRandom));
-                    step += Utils.dp2px(SEGMENT + 4);
+                    step += Utils.dp2px(SEGMENT);
                 } while (step < length);
                 lineRifts[i].lineToEnd();
             } else {
+                // Too short, it's still a beeline, so we must warp it later {@warpStraightLines()},
+                // to make sure it is visible in "FILL" mode.
                 lineRifts[i] = baseLines[i];
                 lineRifts[i].setStraight(true);
             }
@@ -120,6 +153,9 @@ class BrokenAnimator extends ValueAnimator{
         }
     }
 
+    /**
+     * Build beelines according to the angle
+     */
     private void buildBaselines(LinePath[] baseLines,Rect r){
         for(int i = 0; i < mConfig.complexity; i++){
             baseLines[i] = new LinePath();
@@ -127,33 +163,44 @@ class BrokenAnimator extends ValueAnimator{
         }
         buildFirstLine(baseLines[0], r);
 
+        // First angle
         int angle = (int)(Math.toDegrees(Math.atan((float)(-baseLines[0].getEndY()) / baseLines[0].getEndX())));
-        int angleRandom = angle;
+
+        // The four diagonal angle base
         int[] angleBase = new int[4];
         angleBase[0] = (int)(Math.toDegrees(Math.atan((float)(-r.top) / (r.right))));
         angleBase[1] = (int)(Math.toDegrees(Math.atan((float)(-r.top) / (-r.left))));
         angleBase[2] = (int)(Math.toDegrees(Math.atan((float)(r.bottom) / (-r.left))));
         angleBase[3] = (int)(Math.toDegrees(Math.atan((float)(r.bottom) / (r.right))));
 
-        if(baseLines[0].getEndX() < 0)//2-quadrant,3-quadrant
+        if(baseLines[0].getEndX() < 0) // 2-quadrant,3-quadrant
             angle += 180;
-        else if(baseLines[0].getEndX() > 0 && baseLines[0].getEndY() > 0)//4-quadrant
+        else if(baseLines[0].getEndX() > 0 && baseLines[0].getEndY() > 0) // 4-quadrant
             angle += 360;
-        int offset = 360 / mConfig.complexity / 3;
+
+        // Random angle range
+        int range = 360 / mConfig.complexity / 3;
+        int angleRandom;
+
         for(int i = 1; i<mConfig.complexity; i++) {
             angle = angle + 360 / mConfig.complexity;
             if (angle >= 360)
                 angle -= 360;
-            angleRandom = angle + Utils.nextInt(-offset, offset);
+
+            angleRandom = angle + Utils.nextInt(-range, range);
             if (angleRandom >= 360)
                 angleRandom -= 360;
             else if (angleRandom < 0)
                 angleRandom += 360;
+
             baseLines[i].obtainEndPoint(angleRandom,angleBase,r);
             baseLines[i].lineToEnd();
         }
     }
 
+    /**
+     * Line to the the farthest boundary, in case appear a super big piece.
+     */
     private void buildFirstLine(LinePath path, Rect r){
         int[] range=new int[]{-r.left,-r.top,r.right,r.bottom};
         int max = -1;
@@ -181,23 +228,37 @@ class BrokenAnimator extends ValueAnimator{
         path.lineToEnd();
     }
 
+    /**
+     * Build broken area into path
+     */
     private void buildBrokenAreas(Rect r){
+        final int SEGMENT_LESS = SEGMENT * 7 / 9;
+        final int START_LENGTH = (int)(SEGMENT * 1.1);
+
+        // The Circle-Rifts is just some isosceles triangles,
+        // "linkLen" is the length of oblique side
         float linkLen = 0;
         int repeat = 0;
+
         PathMeasure pmNow = new PathMeasure();
         PathMeasure pmPre = new PathMeasure();
+
         for(int i = 0; i < mConfig.complexity; i++) {
+
+            lineRifts[i].setStartLength(Utils.dp2px(START_LENGTH));
+
             if (repeat > 0) {
                 repeat--;
             } else {
-                linkLen = Utils.nextInt(Utils.dp2px(SEGMENT - 15),Utils.dp2px(SEGMENT));
+                linkLen = Utils.nextInt(Utils.dp2px(SEGMENT_LESS),Utils.dp2px(SEGMENT));
                 repeat = Utils.nextInt(3);
             }
+
             int iPre = (i - 1) < 0 ? mConfig.complexity - 1 : i - 1;
             pmNow.setPath(lineRifts[i],false);
             pmPre.setPath(lineRifts[iPre], false);
 
-            if (pmNow.getLength() > linkLen && pmPre.getLength() > linkLen) {
+            if (SEGMENT != 0 && pmNow.getLength() > linkLen && pmPre.getLength() > linkLen) {
 
                 float[] pointNow = new float[2];
                 float[] pointPre = new float[2];
@@ -208,16 +269,12 @@ class BrokenAnimator extends ValueAnimator{
                 pmPre.getPosTan(linkLen, pointPre, null);
                 circleRifts[i].lineTo(pointPre[0], pointPre[1]);
 
-                if (linkLen > lineRifts[i].getStartLength())
-                    lineRifts[i].setStartLength(linkLen);
-                if (linkLen > lineRifts[iPre].getStartLength())
-                    lineRifts[iPre].setStartLength(linkLen);
-
+                // The area outside Circle-Rifts
                 Path pathArea = new Path();
                 pmPre.getSegment(linkLen, pmPre.getLength(), pathArea, true);
-                pathArea.rLineTo(0, 0);
+                pathArea.rLineTo(0, 0); // KITKAT(API 19) and earlier need it
                 drawBorder(pathArea,lineRifts[iPre].getEndPoint(),
-                        lineRifts[i].points.get(lineRifts[i].points.size()-1),r);
+                        lineRifts[i].points.get(lineRifts[i].points.size() - 1),r);
                 for (int j =  lineRifts[i].points.size() - 2; j >= 0; j--)
                     pathArea.lineTo(lineRifts[i].points.get(j).x, lineRifts[i].points.get(j).y);
                 pathArea.lineTo(pointNow[0], pointNow[1]);
@@ -225,6 +282,7 @@ class BrokenAnimator extends ValueAnimator{
                 pathArea.close();
                 pathArray.add(pathArea);
 
+                // The area inside Circle-Rifts, it's a isosceles triangles
                 pathArea = new Path();
                 pathArea.moveTo(0,0);
                 pathArea.lineTo(pointPre[0],pointPre[1]);
@@ -233,9 +291,8 @@ class BrokenAnimator extends ValueAnimator{
                 pathArray.add(pathArea);
             }
             else{
-                Path pathArea = new Path();
-                pmPre.getSegment(0, pmPre.getLength(), pathArea, false);
-                pathArea.rLineTo(0, 0);
+                // Too short, there is no Circle-Rifts
+                Path pathArea = new Path(lineRifts[iPre]);
                 drawBorder(pathArea, lineRifts[iPre].getEndPoint(), lineRifts[i].points.get( lineRifts[i].points.size()-1),r);
                 for (int j = lineRifts[i].points.size() - 2; j >= 0; j--)
                     pathArea.lineTo(lineRifts[i].points.get(j).x,  lineRifts[i].points.get(j).y);
@@ -245,10 +302,14 @@ class BrokenAnimator extends ValueAnimator{
         }
     }
 
+    /**
+     * Build the final bitmap-pieces to draw in animation
+     */
     private void buildPieces(){
         pieces = new Piece[pathArray.size()];
         Paint paint = new Paint();
         Matrix matrix = new Matrix();
+        Canvas canvas = new Canvas();
         for(int i = 0; i < pieces.length; i++) {
             int shadow = Utils.nextInt(Utils.dp2px(2),Utils.dp2px(9));
             Path path = pathArray.get(i);
@@ -263,7 +324,7 @@ class BrokenAnimator extends ValueAnimator{
             }
             pieces[i] = new Piece((int)r.left + mTouchPoint.x - shadow,
                     (int)r.top + mTouchPoint.y - shadow, pBitmap, shadow);
-            Canvas canvas = new Canvas(pieces[i].bitmap);
+            canvas.setBitmap(pieces[i].bitmap);
             BitmapShader mBitmapShader = new BitmapShader(mBitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
             matrix.reset();
             matrix.setTranslate(-r.left - offsetX + shadow, -r.top - offsetY + shadow);
@@ -273,19 +334,23 @@ class BrokenAnimator extends ValueAnimator{
             Path offsetPath = new Path();
             offsetPath.addPath(path, -r.left + shadow, -r.top + shadow);
 
+            // Draw shadow
             paint.setStyle(Paint.Style.FILL);
             paint.setShadowLayer(shadow,0,0,0xff333333);
             canvas.drawPath(offsetPath,paint);
             paint.setShadowLayer(0,0,0,0);
 
+            // In case the view has alpha channel
             paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.XOR));
             canvas.drawPath(offsetPath,paint);
             paint.setXfermode(null);
 
+            // Draw bitmap
             paint.setShader(mBitmapShader);
             paint.setAlpha(0xcc);
             canvas.drawPath(offsetPath, paint);
         }
+        // Sort by shadow
         Arrays.sort(pieces);
     }
 
@@ -294,9 +359,11 @@ class BrokenAnimator extends ValueAnimator{
             onDrawPaint = new Paint();
             BitmapShader shader = new BitmapShader(mBitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
             Matrix matrix = new Matrix();
+            // Refraction effect
             matrix.setTranslate(-offsetX - 10, -offsetY - 7);
             shader.setLocalMatrix(matrix);
             ColorMatrix cMatrix = new ColorMatrix();
+            // Increase saturation and brightness
             cMatrix.set(new float[]{
                     2.5f, 0, 0, 0, 100,
                     0, 2.5f, 0, 0, 100,
@@ -310,7 +377,10 @@ class BrokenAnimator extends ValueAnimator{
             onDrawPaint = mConfig.paint;
     }
 
-    private void warpBrokenLines() {
+    /**
+     *  Make sure it can be seen in "FILL" mode
+     */
+    private void warpStraightLines() {
         PathMeasure pmTemp = new PathMeasure();
         for (int i = 0; i < mConfig.complexity; i++) {
             if(lineRifts[i].isStraight())
@@ -422,7 +492,7 @@ class BrokenAnimator extends ValueAnimator{
 
     public boolean doReverse() {
         if(canReverse) {
-            bPress = !bPress;
+            bPressed = !bPressed;
             reverse();
         }
         return canReverse;
@@ -444,30 +514,29 @@ class BrokenAnimator extends ValueAnimator{
                 onDrawPM.setPath(lineRifts[i], false);
                 float pathLength = onDrawPM.getLength();
                 float startLength = lineRifts[i].getStartLength();
-                if(!lineRifts[i].isStraight())
-                    startLength += Utils.dp2px(7);
                 float drawLength = startLength + fraction * (pathLength - startLength);
                 if (drawLength > pathLength)
                     drawLength = pathLength;
                 onDrawPM.getSegment(0, drawLength, onDrawPath, false);
-                onDrawPath.rLineTo(0, 0);
+                onDrawPath.rLineTo(0, 0); // KITKAT(API 19) and earlier need it
                 canvas.drawPath(onDrawPath, onDrawPaint);
 
-                if (circleRifts[i] != null && fraction > 0.1) {
-                    onDrawPaint.setStyle(Paint.Style.STROKE);
-                    float t = (fraction - 0.1f) * 2;
-                    if(t > 1) t = 1;
-                    onDrawPaint.setStrokeWidth(circleWidth[i] * t);
-                    canvas.drawPath(circleRifts[i], onDrawPaint);
+                if(SEGMENT != 0) {
+                    if (circleRifts[i] != null && fraction > 0.1) {
+                        onDrawPaint.setStyle(Paint.Style.STROKE);
+                        float t = (fraction - 0.1f) * 2;
+                        if(t > 1) t = 1;
+                        onDrawPaint.setStrokeWidth(circleWidth[i] * t);
+                        canvas.drawPath(circleRifts[i], onDrawPaint);
+                    }
                 }
             }
-            if (fraction > 0.8 && bPress) {
+            if (fraction > 0.8 && bPressed) {
                 canReverse = false;
                 setRepeatCount(1);
             }
             canvas.restore();
         }
-
         else if(getStage() == STAGE_FALLING) {
             int piecesNum = pieces.length;
             for(Piece p : pieces){

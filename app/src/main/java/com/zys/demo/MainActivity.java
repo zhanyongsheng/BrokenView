@@ -49,6 +49,7 @@ public class MainActivity extends AppCompatActivity {
     private SeekBar complexitySeekbar;
     private SeekBar breakSeekbar;
     private SeekBar fallSeekbar;
+    private SeekBar radiusSeekbar;
     private Toolbar toolbar;
 
     private BrokenTouchListener colorfulListener;
@@ -107,9 +108,11 @@ public class MainActivity extends AppCompatActivity {
         complexitySeekbar = (SeekBar) findViewById(R.id.seekbar_complexity);
         breakSeekbar = (SeekBar) findViewById(R.id.seekbar_break);
         fallSeekbar = (SeekBar) findViewById(R.id.seekbar_fall);
+        radiusSeekbar = (SeekBar) findViewById(R.id.seekbar_radius);
         final TextView complexityTv = (TextView) findViewById(R.id.complexity_value);
         final TextView breakTv = (TextView) findViewById(R.id.break_value);
         final TextView fallTv = (TextView) findViewById(R.id.fall_value);
+        final TextView radiusTv = (TextView) findViewById(R.id.radius_value);
         SeekBar.OnSeekBarChangeListener listener = new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -122,6 +125,9 @@ public class MainActivity extends AppCompatActivity {
                         break;
                     case R.id.seekbar_fall:
                         fallTv.setText((progress + 1000) + "ms");
+                        break;
+                    case R.id.seekbar_radius:
+                        radiusTv.setText((progress + 20) + "dp");
                         break;
                 }
             }
@@ -137,6 +143,7 @@ public class MainActivity extends AppCompatActivity {
         complexitySeekbar.setOnSeekBarChangeListener(listener);
         breakSeekbar.setOnSeekBarChangeListener(listener);
         fallSeekbar.setOnSeekBarChangeListener(listener);
+        radiusSeekbar.setOnSeekBarChangeListener(listener);
     }
 
     private void initToggleButton(){
@@ -198,11 +205,13 @@ public class MainActivity extends AppCompatActivity {
                         setComplexity(complexitySeekbar.getProgress() + 8).
                         setBreakDuration(breakSeekbar.getProgress() + 500).
                         setFallDuration(fallSeekbar.getProgress() + 1000).
+                        setCircleRiftsRadius(radiusSeekbar.getProgress() + 20).
                         build();
                 whiteListener = new BrokenTouchListener.Builder(mBrokenView).
                         setComplexity(complexitySeekbar.getProgress() + 8).
                         setBreakDuration(breakSeekbar.getProgress() + 500).
                         setFallDuration(fallSeekbar.getProgress() + 1000).
+                        setCircleRiftsRadius(radiusSeekbar.getProgress() + 20).
                         setPaint(whitePaint).
                         build();
 
@@ -243,6 +252,24 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void setOnTouchListener(){
+    /*
+        if you don't want the childView of parentLayout intercept touch event
+        set like this:
+        childView.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                return false;
+            }
+        });
+        childView.setClickable(false);
+
+        if you want only click the button can break the parentLayout,
+        set like this:
+        listener = new BrokenTouchListener.Builder(mBrokenView).
+                setEnableArea(button).
+                build();
+        and set the button don't intercept touch event at the same time
+    */
         parentLayout.setOnTouchListener(colorfulListener);
         button.setOnTouchListener(colorfulListener);
         myView.setOnTouchListener(whiteListener);
