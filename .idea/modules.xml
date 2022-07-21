@@ -3,8 +3,14 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/BrokenView.iml" filepath="$PROJECT_DIR$/BrokenView.iml" />
-      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
-      <module fileurl="file://$PROJECT_DIR$/brokenview/brokenview.iml" filepath="$PROJECT_DIR$/brokenview/brokenview.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/BrokenView.app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/BrokenView.app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/BrokenView.app.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/app/BrokenView.app.androidTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/BrokenView.app.main.iml" filepath="$PROJECT_DIR$/.idea/modules/app/BrokenView.app.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/BrokenView.app.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/app/BrokenView.app.unitTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/brokenview/BrokenView.brokenview.iml" filepath="$PROJECT_DIR$/.idea/modules/brokenview/BrokenView.brokenview.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/brokenview/BrokenView.brokenview.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/brokenview/BrokenView.brokenview.androidTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/brokenview/BrokenView.brokenview.main.iml" filepath="$PROJECT_DIR$/.idea/modules/brokenview/BrokenView.brokenview.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/brokenview/BrokenView.brokenview.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/brokenview/BrokenView.brokenview.unitTest.iml" />
     </modules>
   </component>
 </project>
